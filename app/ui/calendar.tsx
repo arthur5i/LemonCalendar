@@ -3,9 +3,9 @@ import { DAYS_OF_WEEK, HOURS_IN_DAY } from "../lib/const";
 
 // Consider allowing user to alter this and other style values
 const rowHeight = "h-16";
-const borderStyle = `border-r border-b border-gray-200`;
+const borderStyle = `border-r border-t border-gray-200`;
 
-const date = new Date();
+const date = new Date("2026-07-03T12:00:00");
 const currentWeekDay = date.getDay();
 const currentMonthDay = date.getDate();
 
@@ -22,7 +22,7 @@ export default function CalendarPanel() {
   });
 
   return (
-    <div className="flex items-start content-stretch">
+    <div className="flex flex-auto items-start overflow-y-scroll">
       {dateColumns}
     </div>
   );

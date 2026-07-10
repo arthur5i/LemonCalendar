@@ -1,13 +1,15 @@
-"use client";
+//"use client";
 
 import { ReactElement } from "react";
-import Image from "next/image";
-import Gear from "@/public/mdi--gear.svg";
-import { MaxSeparator } from "./components";
+import MiniCalendar from "./minicalendar";
+//import Image from "next/image";
+//import Gear from "@/public/mdi--gear.svg";
+//import { MaxSeparator } from "./components";
 
 export default function OptionsPanel() {
   return (
-    <div className="flex flex-col w-md">
+    <div className="flex flex-col w-md p-2">
+      <MiniCalendar />
       <GroupsSelection />
     </div>
   );
@@ -34,9 +36,9 @@ function BottomPanel({children}: {children: ReactElement}) {
   </div>
 }
 
-function SettingsButton() {
+/*function SettingsButton() {
   return <button className="cursor-pointer" onClick={() => {console.log("settings menu")}}>
     <Gear className="h-8" fill="#000" />
   </button>
-}
+}*/
 

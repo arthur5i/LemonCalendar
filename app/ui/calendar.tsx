@@ -5,6 +5,7 @@ import { DAYS_OF_WEEK, HOURS_IN_DAY } from "../lib/const";
 const rowHeight = "h-16";
 const borderStyle = `border-r border-t border-gray-200`;
 
+// Temporary solution for testing, components ought to pull data from global API
 const date = new Date("2026-07-03T12:00:00");
 const currentWeekDay = date.getDay();
 const currentMonthDay = date.getDate();
@@ -23,25 +24,38 @@ export default function CalendarPanel() {
 
   return (
     <div className="flex flex-auto items-start overflow-y-scroll">
+      <TimeColumn />
       {dateColumns}
     </div>
   );
 }
 
-function createHourBlocksColumn() {
+function createHourBlocksColumn(timeColumn: boolean) {
+  function toTime(num: number) {
+    return `${(num > 9) ? "" : "0"}${num}:00`;
+  }
+
   const rowStyle = `
     ${borderStyle}
     w-full ${rowHeight}`;
 
   const hourBlocks = new Array(HOURS_IN_DAY);
   for (let i = 0; i < hourBlocks.length; i++) {
-    hourBlocks[i] = <div className={rowStyle} key={i}></div>
+    hourBlocks[i] = <div className={rowStyle} key={i}>
+      {timeColumn ? toTime(i) : ""}
+    </div>
   }
+
   return hourBlocks
 }
 
 function TimeColumn() {
-  const hourBlocks = createHourBlocksColumn();
+  const hourBlocks = createHourBlocksColumn(true);
+  
+  return <div>
+    <div className={rowHeight}></div>
+    {hourBlocks}
+  </div>
 }
 
 function DateColumn({ weekDay }: {weekDay: WeekDay}) {
@@ -51,10 +65,11 @@ function DateColumn({ weekDay }: {weekDay: WeekDay}) {
   const headerStyle = `
     ${(isCurrentDay ? "bg-blue-300" : "bg-white")}
     ${borderStyle}
+    ${rowHeight}
     flex flex-col items-center`;
   const columnStyle = `bg-white w-full`;
 
-  const hourBlocks = createHourBlocksColumn();
+  const hourBlocks = createHourBlocksColumn(false);
 
   return (
     <div className={columnStyle}>

@@ -10,3 +10,15 @@ export interface WeekDay {
   shortName: string,
   shorterName: string
 }
+
+export interface MenuBarOption {
+  id: number,
+  name: string,
+  action: () => void,
+}
+
+export interface CalendarGroup {
+  id: string,
+  name: string,
+  checked?: boolean
+}

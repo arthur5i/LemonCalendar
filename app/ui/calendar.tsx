@@ -1,16 +1,24 @@
-import { WeekDay } from "../lib/types";
+import { WeekDay, CalendarGroup } from "../lib/types";
 import { DAYS_OF_WEEK, HOURS_IN_DAY } from "../lib/const"; 
+import { getFirstDayOfWeek } from "../lib/utils";
+//import { CurrentTime } from "../lib/date";
 
 // Consider allowing user to alter this and other style values
 const rowHeight = "h-16";
 const borderStyle = `border-r border-t border-gray-200`;
 
 // Temporary solution for testing, components ought to pull data from global API
-const date = new Date("2026-07-03T12:00:00");
-const currentWeekDay = date.getDay();
-const currentMonthDay = date.getDate();
+const currentDate = new Date("2026-07-03T12:00:00");
+const currentWeekDay = currentDate.getDay();
+const currentMonthDay = currentDate.getDate();
 
-export default function CalendarPanel() {
+/**
+ * The main interactive calendar of the application.
+ * @prop calendarGroups {CalendarGroup[]}
+ */
+export default function CalendarPanel({ calendarGroups }: {
+  calendarGroups: CalendarGroup[]
+}) {
   /*
   NOTE FOR FUTURE REFERENCE
   The calendar should update with the passage of time, however this will
@@ -18,8 +26,12 @@ export default function CalendarPanel() {
   Please consider implementing real time sooner rather than later.
   */
 
+  const dateOfWeek = getFirstDayOfWeek(currentDate);
+  
   const dateColumns = DAYS_OF_WEEK.map((weekDay) => {
-    return <DateColumn weekDay={weekDay} key={weekDay.id} />;
+    const monthDate = dateOfWeek.getDate();
+    dateOfWeek.setDate(monthDate + 1);
+    return <DateColumn monthDate={monthDate} weekDayId={weekDay.id} key={weekDay.id} />;
   });
 
   return (
@@ -30,6 +42,10 @@ export default function CalendarPanel() {
   );
 }
 
+/**
+ * Creates the elements that contain the display for the hours of the day
+ * @param {boolean} timeColumn
+ */
 function createHourBlocksColumn(timeColumn: boolean) {
   function toTime(num: number) {
     return `${(num > 9) ? "" : "0"}${num}:00`;
@@ -49,6 +65,10 @@ function createHourBlocksColumn(timeColumn: boolean) {
   return hourBlocks
 }
 
+
+/**
+ * Displays each hour of the day on the left of the UI
+ */
 function TimeColumn() {
   const hourBlocks = createHourBlocksColumn(true);
   
@@ -58,9 +78,14 @@ function TimeColumn() {
   </div>
 }
 
-function DateColumn({ weekDay }: {weekDay: WeekDay}) {
-  const isCurrentDay = (currentWeekDay === weekDay.id);
-  const columnDate = currentMonthDay + (weekDay.id - currentWeekDay);
+/**
+ * 
+ * @returns 
+ */
+function DateColumn({monthDate, weekDayId}: {monthDate: number, weekDayId: number}) {
+  const isCurrentDay = (currentWeekDay === weekDayId);
+  const columnDate = monthDate;
+  const weekDay = DAYS_OF_WEEK[weekDayId];
   
   const headerStyle = `
     ${(isCurrentDay ? "bg-blue-300" : "bg-white")}

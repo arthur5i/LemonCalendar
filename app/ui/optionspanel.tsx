@@ -1,30 +1,57 @@
-//"use client";
+"use client";
 
-import { ReactElement, EventHandler } from "react";
+import { ReactElement, useState, useContext } from "react";
+import { produce } from "immer";
+import { CalendarGroup } from "../lib/types";
 import MiniCalendar from "./minicalendar";
-//import Image from "next/image";
-//import Gear from "@/public/mdi--gear.svg";
 import { Panel } from "./components";
+import { Field } from "@/components/ui/field";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
-export default function OptionsPanel() {
+
+export default function OptionsPanel({ calendarGroups, setCalendarGroups }:
+  {
+    calendarGroups: CalendarGroup[]
+    setCalendarGroups: Function
+  }) {
   return (
     <Panel direction="col" style="w-md p-2">
       <MiniCalendar />
-      <GroupsSelection />
+      <GroupsSelection calendarGroups={calendarGroups} setCalendarGroups={setCalendarGroups}/>
     </Panel>
   );
 }
 
-function GroupsSelection() {
-  const tempGroups = ["Group 1", "Group 2"];
+function GroupsSelection({ calendarGroups, setCalendarGroups }:
+  {
+    calendarGroups: CalendarGroup[]
+    setCalendarGroups: Function
+  }) {
 
+  function toggleChecked(index: number, checked: boolean) {
+    setCalendarGroups(produce(calendarGroups, draft => {
+      draft[index]["checked"] = checked;
+    }));
+  }
+
+  const checkboxes = calendarGroups.map((value, index) => {
+    return (
+      <li key={value["id"]}>
+        <Field orientation="horizontal" className="m-2">
+          <Checkbox
+          checked={calendarGroups[index]["checked"]}
+          onCheckedChange={(checked) => toggleChecked(index, checked)} />
+          <Label>{value["name"]}</Label>
+        </Field>
+      </li>
+    )
+  });
+  
   return (
   <div>
     <ul className="list-none">
-      {tempGroups.map(value => <li key={value}>
-        <input type="checkbox" />
-        <span>{value}</span>
-      </li>)}
+      {checkboxes}
     </ul>
   </div>
   );

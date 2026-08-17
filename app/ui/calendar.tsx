@@ -1,16 +1,13 @@
 import { WeekDay, CalendarGroup } from "../lib/types";
-import { DAYS_OF_WEEK, HOURS_IN_DAY } from "../lib/const"; 
-import { getFirstDayOfWeek } from "../lib/utils";
-//import { CurrentTime } from "../lib/date";
+import { DAYS_OF_WEEK, HOURS_IN_DAY } from "../lib/const";
+import { CurrentTime } from "../lib/time";
 
 // Consider allowing user to alter this and other style values
 const rowHeight = "h-16";
 const borderStyle = `border-r border-t border-gray-200`;
 
-// Temporary solution for testing, components ought to pull data from global API
-const currentDate = new Date("2026-07-03T12:00:00");
-const currentWeekDay = currentDate.getDay();
-const currentMonthDay = currentDate.getDate();
+const currentWeekDay = CurrentTime.getDay();
+const currentMonthDay = CurrentTime.getDate();
 
 /**
  * The main interactive calendar of the application.
@@ -26,7 +23,7 @@ export default function CalendarPanel({ calendarGroups }: {
   Please consider implementing real time sooner rather than later.
   */
 
-  const dateOfWeek = getFirstDayOfWeek(currentDate);
+  const dateOfWeek = CurrentTime.getDateForFirstDayOfWeek();
   
   const dateColumns = DAYS_OF_WEEK.map((weekDay) => {
     const monthDate = dateOfWeek.getDate();

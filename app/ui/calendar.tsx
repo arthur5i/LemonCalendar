@@ -1,6 +1,8 @@
 import { WeekDay, CalendarGroup } from "../lib/types";
 import { DAYS_OF_WEEK, HOURS_IN_DAY } from "../lib/const";
 import { CurrentTime } from "../lib/time";
+import { addDays, startOfWeek } from "date-fns";
+//import { getDateForFirstDayOfWeek, offsetDate } from "../lib/utils";
 
 // Consider allowing user to alter this and other style values
 const rowHeight = "h-16";
@@ -23,12 +25,12 @@ export default function CalendarPanel({ calendarGroups }: {
   Please consider implementing real time sooner rather than later.
   */
 
-  const dateOfWeek = CurrentTime.getDateForFirstDayOfWeek();
+  let dateOfWeek = startOfWeek(CurrentTime.date);
   
   const dateColumns = DAYS_OF_WEEK.map((weekDay) => {
-    const monthDate = dateOfWeek.getDate();
-    dateOfWeek.setDate(monthDate + 1);
-    return <DateColumn monthDate={monthDate} weekDayId={weekDay.id} key={weekDay.id} />;
+    const dateColumn = <DateColumn monthDate={dateOfWeek.getDate()} weekDayId={weekDay.id} key={weekDay.id} />;
+    dateOfWeek = addDays(dateOfWeek, 1);
+    return dateColumn;
   });
 
   return (

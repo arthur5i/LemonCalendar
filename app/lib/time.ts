@@ -14,12 +14,5 @@ export class CurrentTime {
   static getMonth() {
     return CurrentTime.date.getMonth();
   }
-
-  static getDateForFirstDayOfWeek(): Date {
-    const dateOut = new Date(CurrentTime.date);
-    const day = dateOut.getDay();
-    dateOut.setDate(dateOut.getDate() - day);
-    return dateOut;
-  }
 }
 

@@ -2,37 +2,80 @@
 
 import { ReactElement, useState, useContext } from "react";
 import { produce } from "immer";
+import { getWeekRangeOfDate } from "../lib/utils";
 import { CurrentTime } from "../lib/time";
 import { CalendarGroup } from "../lib/types";
-import MiniCalendar from "./minicalendar";
 import { Panel } from "./components";
 import { Field } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
-import { ClassNames, DayPicker } from 'react-day-picker';
+import { endOfWeek, startOfWeek } from "date-fns";
+import { ClassNames, DayPicker, DateRange, rangeIncludesDate, Modifiers } from 'react-day-picker';
+import styles from "./optionspanel.module.css";
 import calendarStyles from "react-day-picker/dist/style.module.css";
 
-export default function OptionsPanel({ calendarGroups, setCalendarGroups }:
+export default function OptionsPanel({ calendarGroups, setCalendarGroups, selectedWeek, setSelectedWeek }:
   {
-    calendarGroups: CalendarGroup[]
-    setCalendarGroups: Function
+    calendarGroups: CalendarGroup[],
+    setCalendarGroups: Function,
+    selectedWeek: DateRange,
+    setSelectedWeek: Function
   }) {
-
-  const calendarClassNames = {
-    ...calendarStyles,
-    weekday: calendarStyles.day
-  }
 
   return (
     <Panel direction="col" style="w-md p-2">
-      <Calendar
-        selected={CurrentTime.date}
-        classNames={calendarClassNames}
+      <MiniCalendar
+      selectedWeek={selectedWeek}
+      setSelectedWeek={setSelectedWeek}
       />
       <GroupsSelection calendarGroups={calendarGroups} setCalendarGroups={setCalendarGroups}/>
     </Panel>
   );
+}
+
+function MiniCalendar({selectedWeek, setSelectedWeek}: {
+  selectedWeek: DateRange,
+  setSelectedWeek: Function
+}) {
+  function selectWeek(day: Date, modifiers: Modifiers) {
+    /*const weekRange = getWeekRangeOfDate(day);
+    setSelectedWeek(weekRange);*/
+    if (modifiers.disabled || modifiers.hidden) return;
+    /*if (modifiers.selected) {
+      setSelectedWeek(undefined);
+      return;
+    }*/
+    setSelectedWeek({
+      from: startOfWeek(day),
+      to: endOfWeek(day),
+    });
+  }
+
+  const calendarClassNames = {
+    ...calendarStyles,
+    weekday: calendarStyles.day,
+    selected: styles.selected
+  };
+
+  return <Calendar
+    modifiers={{
+      selected: selectedWeek,
+      range_start: selectedWeek.from,
+      range_end: selectedWeek.to,
+      range_middle: (date: Date) =>
+        selectedWeek ? rangeIncludesDate(selectedWeek, date, true) : false,
+    }}
+    onDayClick={selectWeek}
+    footer={
+      selectedWeek &&
+      `Week from ${selectedWeek?.from?.toLocaleDateString()} to ${selectedWeek?.to?.toLocaleDateString()}`
+    }
+    classNames={calendarClassNames}
+    weekStartsOn={0}
+    showOutsideDays
+    fixedWeeks
+    />
 }
 
 function GroupsSelection({ calendarGroups, setCalendarGroups }:

@@ -1,8 +1,8 @@
 import { WeekDay, CalendarGroup } from "../lib/types";
 import { DAYS_OF_WEEK, HOURS_IN_DAY } from "../lib/const";
 import { CurrentTime } from "../lib/time";
-import { addDays, startOfWeek } from "date-fns";
-//import { getDateForFirstDayOfWeek, offsetDate } from "../lib/utils";
+import { addDays, startOfWeek, isSameDay } from "date-fns";
+import { DateRange } from 'react-day-picker';
 
 // Consider allowing user to alter this and other style values
 const rowHeight = "h-16";
@@ -15,8 +15,9 @@ const currentMonthDay = CurrentTime.getDate();
  * The main interactive calendar of the application.
  * @prop calendarGroups {CalendarGroup[]}
  */
-export default function CalendarPanel({ calendarGroups }: {
-  calendarGroups: CalendarGroup[]
+export default function CalendarPanel({ calendarGroups, selectedWeek }: {
+  calendarGroups: CalendarGroup[],
+  selectedWeek: DateRange
 }) {
   /*
   NOTE FOR FUTURE REFERENCE
@@ -25,10 +26,10 @@ export default function CalendarPanel({ calendarGroups }: {
   Please consider implementing real time sooner rather than later.
   */
 
-  let dateOfWeek = startOfWeek(CurrentTime.date);
+  let dateOfWeek = selectedWeek.from!;
   
   const dateColumns = DAYS_OF_WEEK.map((weekDay) => {
-    const dateColumn = <DateColumn monthDate={dateOfWeek.getDate()} weekDayId={weekDay.id} key={weekDay.id} />;
+    const dateColumn = <DateColumn date={dateOfWeek} key={weekDay.id} />;
     dateOfWeek = addDays(dateOfWeek, 1);
     return dateColumn;
   });
@@ -81,10 +82,10 @@ function TimeColumn() {
  * 
  * @returns 
  */
-function DateColumn({monthDate, weekDayId}: {monthDate: number, weekDayId: number}) {
-  const isCurrentDay = (currentWeekDay === weekDayId);
-  const columnDate = monthDate;
-  const weekDay = DAYS_OF_WEEK[weekDayId];
+function DateColumn({date}: {date: Date}) {
+  const isCurrentDay = isSameDay(date, CurrentTime.date);
+  const columnDate = date.getDate();
+  const weekDay = DAYS_OF_WEEK[date.getDay()];
   
   const headerStyle = `
     ${(isCurrentDay ? "bg-blue-300" : "bg-white")}

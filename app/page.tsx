@@ -33,7 +33,10 @@ export default function Home() {
         calendarGroups={calendarGroups} setCalendarGroups={setCalendarGroups}
         selectedWeek={selectedWeek} setSelectedWeek={setSelectedWeek}
         />
-        <CalendarPanel calendarGroups={calendarGroups} />
+        <CalendarPanel
+        calendarGroups={calendarGroups}
+        selectedWeek={selectedWeek}
+        />
       </div>
     </div>
   );

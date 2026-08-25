@@ -39,13 +39,7 @@ function MiniCalendar({selectedWeek, setSelectedWeek}: {
   setSelectedWeek: Function
 }) {
   function selectWeek(day: Date, modifiers: Modifiers) {
-    /*const weekRange = getWeekRangeOfDate(day);
-    setSelectedWeek(weekRange);*/
     if (modifiers.disabled || modifiers.hidden) return;
-    /*if (modifiers.selected) {
-      setSelectedWeek(undefined);
-      return;
-    }*/
     setSelectedWeek({
       from: startOfWeek(day),
       to: endOfWeek(day),

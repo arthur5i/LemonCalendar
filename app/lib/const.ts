@@ -1,4 +1,7 @@
 import { Month, WeekDay } from "./types";
+import { createNumberSequence } from "./utils";
+
+export const TEST_EVENT_GROUPS = true;
 
 export const MONTHS: Month[] = [
   { id: 0, name: "January", shortName: "Jan" },
@@ -26,3 +29,8 @@ export const DAYS_OF_WEEK: WeekDay[] = [
 ];
 
 export const HOURS_IN_DAY = 24;
+export const HOURS_SEQUENCE = createNumberSequence(HOURS_IN_DAY);
+
+export const DEFAULT_EVENT_TITLE = "Event";
+export const DEFAULT_COLOR = "#558afc";
+export const DEFAULT_EVENT_DURATION = 15;

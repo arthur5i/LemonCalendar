@@ -1,24 +1,20 @@
 "use client";
 
-import { ReactElement, useState, useContext } from "react";
-import { produce } from "immer";
-import { getWeekRangeOfDate } from "../lib/utils";
-import { CurrentTime } from "../lib/time";
-import { CalendarGroup } from "../lib/types";
+import { ReactElement, useState } from "react";
+import { EventGroup } from "../lib/events";
 import { Panel } from "./components";
 import { Field } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { endOfWeek, startOfWeek } from "date-fns";
-import { ClassNames, DayPicker, DateRange, rangeIncludesDate, Modifiers } from 'react-day-picker';
-import styles from "./optionspanel.module.css";
+import { DateRange, rangeIncludesDate, Modifiers } from 'react-day-picker';
 import calendarStyles from "react-day-picker/dist/style.module.css";
 
-export default function OptionsPanel({ calendarGroups, setCalendarGroups, selectedWeek, setSelectedWeek }:
+export default function OptionsPanel({eventGroups, setEventGroups, selectedWeek, setSelectedWeek}:
   {
-    calendarGroups: CalendarGroup[],
-    setCalendarGroups: Function,
+    eventGroups: EventGroup[],
+    setEventGroups: Function
     selectedWeek: DateRange,
     setSelectedWeek: Function
   }) {
@@ -26,10 +22,11 @@ export default function OptionsPanel({ calendarGroups, setCalendarGroups, select
   return (
     <Panel direction="col" style="w-md p-2">
       <MiniCalendar
-      selectedWeek={selectedWeek}
-      setSelectedWeek={setSelectedWeek}
+      selectedWeek={selectedWeek} setSelectedWeek={setSelectedWeek}
       />
-      <GroupsSelection calendarGroups={calendarGroups} setCalendarGroups={setCalendarGroups}/>
+      <GroupsSelection
+      eventGroups={eventGroups} setEventGroups={setEventGroups}
+      />
     </Panel>
   );
 }
@@ -48,8 +45,7 @@ function MiniCalendar({selectedWeek, setSelectedWeek}: {
 
   const calendarClassNames = {
     ...calendarStyles,
-    weekday: calendarStyles.day,
-    selected: styles.selected
+    weekday: calendarStyles.day
   };
 
   return <Calendar
@@ -72,26 +68,22 @@ function MiniCalendar({selectedWeek, setSelectedWeek}: {
     />
 }
 
-function GroupsSelection({ calendarGroups, setCalendarGroups }:
-  {
-    calendarGroups: CalendarGroup[]
-    setCalendarGroups: Function
-  }) {
-
-  function toggleChecked(index: number, checked: boolean) {
-    setCalendarGroups(produce(calendarGroups, draft => {
-      draft[index]["checked"] = checked;
-    }));
+function GroupsSelection({eventGroups, setEventGroups}: {eventGroups: EventGroup[], setEventGroups: Function}) {
+  function setChecked(checked: boolean, id: string) {
+    setEventGroups((draft: EventGroup[]) => {
+      const group = draft.find(g => g.id === id);
+      if (group !== undefined) group.visible = checked;
+    })
   }
 
-  const checkboxes = calendarGroups.map((value, index) => {
+  const checkboxes = eventGroups.map((group) => {
     return (
-      <li key={value["id"]}>
+      <li key={group.id}>
         <Field orientation="horizontal" className="m-2">
           <Checkbox
-          checked={calendarGroups[index]["checked"]}
-          onCheckedChange={(checked) => toggleChecked(index, checked)} />
-          <Label>{value["name"]}</Label>
+          checked={group.visible}
+          onCheckedChange={(checked) => {setChecked(checked, group.id)}} />
+          <Label>{group.name}</Label>
         </Field>
       </li>
     )
@@ -100,10 +92,21 @@ function GroupsSelection({ calendarGroups, setCalendarGroups }:
   return (
   <div>
     <ul className="list-none">
-      {checkboxes}
+      {Array.from(checkboxes)}
     </ul>
   </div>
   );
+}
+
+function GroupCheckbox({name, visible}: {name: string, visible: boolean}) {
+  const [checked, setChecked] = useState(visible);
+
+  return <Field orientation="horizontal" className="m-2">
+    <Checkbox
+    checked={checked}
+    onCheckedChange={(isChecked) => {setChecked(isChecked)}} />
+    <Label>{name}</Label>
+  </Field>
 }
 
 function BottomPanel({children}: {children: ReactElement}) {
@@ -111,9 +114,3 @@ function BottomPanel({children}: {children: ReactElement}) {
     {children}
   </div>
 }
-
-/*function SettingsButton() {
-  return <button className="cursor-pointer" onClick={() => {console.log("settings menu")}}>
-    <Gear className="h-8" fill="#000" />
-  </button>
-}*/

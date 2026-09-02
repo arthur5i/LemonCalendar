@@ -1,3 +1,2 @@
-import { createContext } from 'react';
-
-export const ActiveGroups = createContext({});
+import { createContext } from "react";
+import { EventGroup } from "./events";

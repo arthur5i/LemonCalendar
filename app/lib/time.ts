@@ -1,6 +1,6 @@
 "use client";
 
-export class CurrentTime {
+export default class CurrentTime {
   static readonly date = new Date();
   
   static getDay() {

@@ -1,0 +1,23 @@
+[
+  {
+    "id": "5acf4f2d-9b2e-4abc-93eb-2ba2bf1e6bb2",
+    "name": "Group 1",
+    "events": [],
+    "visible": true,
+    "locked": false
+  },
+  {
+    "id": "aa13cf91-da0f-4ef2-b81d-e82cc6faf231",
+    "name": "Group 2",
+    "events": [],
+    "visible": true,
+    "locked": false
+  },
+  {
+    "id": "446ca558-27c4-4a88-8c41-b01759a6e13c",
+    "name": "Group 3",
+    "events": [],
+    "visible": true,
+    "locked": false
+  }
+]

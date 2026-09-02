@@ -1,23 +1,24 @@
-import { WeekDay, CalendarGroup } from "../lib/types";
+"use client";
+
 import { DAYS_OF_WEEK, HOURS_IN_DAY } from "../lib/const";
-import { CurrentTime } from "../lib/time";
-import { addDays, startOfWeek, isSameDay } from "date-fns";
-import { DateRange } from 'react-day-picker';
+import CurrentTime from "../lib/time";
+import { CalEvent } from "../lib/events";
+import { getSimpleTime } from "../lib/utils";
+import { format, addDays, isSameDay } from "date-fns";
+import { DateRange } from "react-day-picker";
+import { Properties } from "csstype";
 
 // Consider allowing user to alter this and other style values
-const rowHeight = "h-16";
-const borderStyle = `border-r border-t border-gray-200`;
-
-const currentWeekDay = CurrentTime.getDay();
-const currentMonthDay = CurrentTime.getDate();
+//const spacing = Number.parseInt(getCSSVariable("--spacing"));
+const rowHeightValue = 16;
+const rowHeight = `calc(var(--spacing) * ${rowHeightValue})`;
 
 /**
  * The main interactive calendar of the application.
  * @prop calendarGroups {CalendarGroup[]}
  */
-export default function CalendarPanel({ calendarGroups, selectedWeek }: {
-  calendarGroups: CalendarGroup[],
-  selectedWeek: DateRange
+export default function CalendarPanel({ selectedWeek, events, setEvents }: {
+  selectedWeek: DateRange, events: CalEvent[], setEvents: Function
 }) {
   /*
   NOTE FOR FUTURE REFERENCE
@@ -27,9 +28,13 @@ export default function CalendarPanel({ calendarGroups, selectedWeek }: {
   */
 
   let dateOfWeek = selectedWeek.from!;
-  
+
   const dateColumns = DAYS_OF_WEEK.map((weekDay) => {
-    const dateColumn = <DateColumn date={dateOfWeek} key={weekDay.id} />;
+    const dateColumn = <DateColumn
+    date={dateOfWeek}
+    events={events}
+    setEvents={setEvents}
+    key={weekDay.id} />;
     dateOfWeek = addDays(dateOfWeek, 1);
     return dateColumn;
   });
@@ -42,27 +47,24 @@ export default function CalendarPanel({ calendarGroups, selectedWeek }: {
   );
 }
 
-/**
- * Creates the elements that contain the display for the hours of the day
- * @param {boolean} timeColumn
- */
-function createHourBlocksColumn(timeColumn: boolean) {
-  function toTime(num: number) {
-    return `${(num > 9) ? "" : "0"}${num}:00`;
+
+function CalBlock({headerType, onClick, children}:
+  {headerType?: boolean, onClick?: React.MouseEventHandler<HTMLDivElement>, children?: React.ReactNode}) {
+
+  const cssStyle = {
+    height: rowHeight
   }
 
-  const rowStyle = `
-    ${borderStyle}
-    w-full ${rowHeight}`;
-
-  const hourBlocks = new Array(HOURS_IN_DAY);
-  for (let i = 0; i < hourBlocks.length; i++) {
-    hourBlocks[i] = <div className={rowStyle} key={i}>
-      {timeColumn ? toTime(i) : ""}
-    </div>
+  let headerStyle = "";
+  if (headerType !== undefined) {
+    headerStyle = `
+    ${(headerType ? "bg-blue-300" : "bg-white")}
+    flex flex-col items-center`;
   }
+  
+  const twStyle = `w-full border-r border-t border-gray-200 ${headerStyle}`
 
-  return hourBlocks
+  return <div className={twStyle} style={cssStyle} onClick={onClick}>{children}</div>
 }
 
 
@@ -70,44 +72,120 @@ function createHourBlocksColumn(timeColumn: boolean) {
  * Displays each hour of the day on the left of the UI
  */
 function TimeColumn() {
-  const hourBlocks = createHourBlocksColumn(true);
+  const hourBlocks = Array(HOURS_IN_DAY).fill(0).map((value, index) => {
+    return <TimeBlock hour={index} key={index}/>
+  });
   
   return <div>
-    <div className={rowHeight}></div>
+    <CalBlock></CalBlock>
     {hourBlocks}
   </div>
 }
 
-/**
- * 
- * @returns 
- */
-function DateColumn({date}: {date: Date}) {
+
+function DateColumn({date, events, setEvents}:
+  {date: Date, events: CalEvent[], setEvents: Function}) {
   const isCurrentDay = isSameDay(date, CurrentTime.date);
   const columnDate = date.getDate();
   const weekDay = DAYS_OF_WEEK[date.getDay()];
   
-  const headerStyle = `
-    ${(isCurrentDay ? "bg-blue-300" : "bg-white")}
-    ${borderStyle}
-    ${rowHeight}
-    flex flex-col items-center`;
-  const columnStyle = `bg-white w-full`;
+  const columnStyle = "bg-white w-full relative";
+  const innerColumnStyle: Properties = {
+    position: "absolute",
+    width: "100%",
+    top: `calc(var(--spacing) * ${rowHeightValue} + ${rowHeightValue})`,
+  };
+  
+  const hourBlocks = Array(HOURS_IN_DAY).fill(0).map((value, index) => {
+    return <HourBlock
+    hour={index}
+    date={date}
+    setEvents={setEvents}
+    key={index}
+    />
+  });
 
-  const hourBlocks = createHourBlocksColumn(false);
+  const thisDayEvents = events.filter(event => {
+    return (isSameDay(date, event.fromDate));
+  });
+  const eventBlocks = thisDayEvents.map((event, index) => {
+    return <EventBlock
+      calEvent={event}
+      key={event.id}/>;
+  });
 
   return (
     <div className={columnStyle}>
-      <div className={headerStyle}>
+      <CalBlock headerType={isCurrentDay}>
         <div>
           {weekDay.shortName}
         </div>
         <div>
           {columnDate}
         </div>
+      </CalBlock>
+      <div style={innerColumnStyle}>
+        {eventBlocks}
       </div>
-      {hourBlocks}
+      <div style={innerColumnStyle}>
+        {hourBlocks}
+      </div>
     </div>
-  )
+  );
+}
 
+
+function TimeBlock({hour}: {hour: number}) {
+  return <CalBlock>
+    {getSimpleTime(hour, false)}
+  </CalBlock>
+}
+
+
+/**
+ * Renders one cell of the calendar. Clicking on this will add a new event via setEvents, and consequently spawn an event on the calendar.
+ * @param param0 
+ * @returns 
+ */
+function HourBlock({hour, date, setEvents}:
+  {hour: number, date: Date, setEvents: Function}) {
+
+  function createEvent(event: React.MouseEvent<HTMLElement>) {
+    // Calculate where the mouse was clicked and use that to generate a date
+    const fromDate = new Date(date);
+    fromDate.setHours(hour);
+
+    //console.log(`X: ${event.nativeEvent.offsetX}, Y: ${event.nativeEvent.offsetY}`);
+
+    setEvents((draft: CalEvent[]) => {
+      draft.push(new CalEvent(fromDate));
+    });
+  }
+
+  return <CalBlock onClick={createEvent}></CalBlock>
+}
+
+
+function EventBlock({calEvent}: {calEvent: CalEvent}) {
+  /*
+  TODO: Handle having multiple events happening at the same time
+  */
+
+  function getYPos() {
+    return calEvent.fromDate.getHours();
+  }
+
+  // Temporary
+  const eventName = <>
+  {format(calEvent.fromDate, "dd/MM/yyyy")}
+  <br/>
+  {format(calEvent.fromDate, "hh:mm b")}</>;
+
+  const cssStyle = {
+    height: rowHeight,
+    top: `calc(var(--spacing) * ${rowHeightValue * getYPos()})`
+  }
+  const twStyle = "bg-blue-500 text-white p-1 w-full absolute";
+
+  return <div style={cssStyle} className={twStyle}>{eventName}</div>
 }

@@ -22,3 +22,15 @@ export interface CalendarGroup {
   name: string,
   checked?: boolean
 }
+
+export enum DateFormat {
+  DMY = "dd/MM/yyyy",
+  MDY = "MM/dd/yyyy",
+  YMD = "yyyy/MM/dd"
+}
+
+export interface PreferencesType {
+  tfHourTime: boolean,
+  dateFormat: DateFormat,
+  weekStartsOnMonday: boolean
+}

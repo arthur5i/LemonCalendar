@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useImmer } from "use-immer";
 import { getWeekRangeOfDate } from "./lib/utils";
 import CurrentTime from "./lib/time";
 import { EventGroup, CalEvent} from "./lib/events";
+import { Preferences } from "./lib/context";
+import { PRESET_PREFERENCES } from "./lib/const";
 import MainMenuBar from "./ui/mainmenubar";
 import OptionsPanel from "./ui/optionspanel";
 import CalendarPanel from "./ui/calendar";
@@ -44,19 +46,23 @@ export default function Home() {
     getWeekRangeOfDate(CurrentTime.date)
   );
 
+  const [preferences, setPreferences] = useState(PRESET_PREFERENCES.get("US")!);
+
   return (
     <div className="flex flex-col h-screen">
+      <Preferences value={preferences}>
       <MainMenuBar />
-      <div className="flex h-screen overflow-y-hidden">
-        <OptionsPanel
-        eventGroups={eventGroups} setEventGroups={setEventGroups}
-        selectedWeek={selectedWeek} setSelectedWeek={setSelectedWeek}
-        />
-        <CalendarPanel
-        selectedWeek={selectedWeek}
-        events={events} setEvents={setEvents}
-        />
-      </div>
+        <div className="flex h-screen overflow-y-hidden">
+            <OptionsPanel
+            eventGroups={eventGroups} setEventGroups={setEventGroups}
+            selectedWeek={selectedWeek} setSelectedWeek={setSelectedWeek}
+            />
+            <CalendarPanel
+            selectedWeek={selectedWeek}
+            events={events} setEvents={setEvents}
+            />
+        </div>
+      </Preferences>
     </div>
   );
 }

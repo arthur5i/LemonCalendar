@@ -1,7 +1,20 @@
-import { Month, WeekDay } from "./types";
+import { Month, WeekDay, DateFormat, PreferencesType } from "./types";
 import { createNumberSequence } from "./utils";
 
 export const TEST_EVENT_GROUPS = true;
+
+export const PRESET_PREFERENCES: Map<String, PreferencesType> = new Map([
+  ["NA", {
+    tfHourTime: false,
+    dateFormat: DateFormat.MDY,
+    weekStartsOnMonday: false
+  }],
+  ["EU", {
+    tfHourTime: true,
+    dateFormat: DateFormat.DMY,
+    weekStartsOnMonday: true
+  }]
+]);
 
 export const MONTHS: Month[] = [
   { id: 0, name: "January", shortName: "Jan" },
@@ -31,6 +44,6 @@ export const DAYS_OF_WEEK: WeekDay[] = [
 export const HOURS_IN_DAY = 24;
 export const HOURS_SEQUENCE = createNumberSequence(HOURS_IN_DAY);
 
-export const DEFAULT_EVENT_TITLE = "Event";
+export const DEFAULT_EVENT_TITLE = "";
 export const DEFAULT_COLOR = "#558afc";
 export const DEFAULT_EVENT_DURATION = 15;

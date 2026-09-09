@@ -1,21 +1,23 @@
-"use client";
+//"use client";
 
+import { useContext } from "react";
+import EventBlock from "./eventblock";
 import { DAYS_OF_WEEK, HOURS_IN_DAY } from "../lib/const";
 import CurrentTime from "../lib/time";
 import { CalEvent } from "../lib/events";
-import { getSimpleTime } from "../lib/utils";
+import { getSimpleTime, calcSpacing } from "../lib/utils";
 import { format, addDays, isSameDay } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Properties } from "csstype";
+import { Preferences } from "../lib/context";
 
 // Consider allowing user to alter this and other style values
 //const spacing = Number.parseInt(getCSSVariable("--spacing"));
 const rowHeightValue = 16;
-const rowHeight = `calc(var(--spacing) * ${rowHeightValue})`;
+const rowHeight = calcSpacing(rowHeightValue);
 
 /**
  * The main interactive calendar of the application.
- * @prop calendarGroups {CalendarGroup[]}
  */
 export default function CalendarPanel({ selectedWeek, events, setEvents }: {
   selectedWeek: DateRange, events: CalEvent[], setEvents: Function
@@ -108,9 +110,13 @@ function DateColumn({date, events, setEvents}:
   const thisDayEvents = events.filter(event => {
     return (isSameDay(date, event.fromDate));
   });
+
   const eventBlocks = thisDayEvents.map((event, index) => {
     return <EventBlock
-      calEvent={event}
+      thisEvent={event}
+      events={events}
+      setEvents={setEvents}
+      rowHeightValue={rowHeightValue}
       key={event.id}/>;
   });
 
@@ -125,10 +131,10 @@ function DateColumn({date, events, setEvents}:
         </div>
       </CalBlock>
       <div style={innerColumnStyle}>
-        {eventBlocks}
+        {hourBlocks}
       </div>
       <div style={innerColumnStyle}>
-        {hourBlocks}
+        {eventBlocks}
       </div>
     </div>
   );
@@ -136,6 +142,8 @@ function DateColumn({date, events, setEvents}:
 
 
 function TimeBlock({hour}: {hour: number}) {
+  //const pref = useContext(Preferences);
+
   return <CalBlock>
     {getSimpleTime(hour, false)}
   </CalBlock>
@@ -163,29 +171,4 @@ function HourBlock({hour, date, setEvents}:
   }
 
   return <CalBlock onClick={createEvent}></CalBlock>
-}
-
-
-function EventBlock({calEvent}: {calEvent: CalEvent}) {
-  /*
-  TODO: Handle having multiple events happening at the same time
-  */
-
-  function getYPos() {
-    return calEvent.fromDate.getHours();
-  }
-
-  // Temporary
-  const eventName = <>
-  {format(calEvent.fromDate, "dd/MM/yyyy")}
-  <br/>
-  {format(calEvent.fromDate, "hh:mm b")}</>;
-
-  const cssStyle = {
-    height: rowHeight,
-    top: `calc(var(--spacing) * ${rowHeightValue * getYPos()})`
-  }
-  const twStyle = "bg-blue-500 text-white p-1 w-full absolute";
-
-  return <div style={cssStyle} className={twStyle}>{eventName}</div>
 }

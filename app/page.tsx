@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useContext } from "react";
+import { enableMapSet } from "immer";
 import { useImmer } from "use-immer";
 import { getWeekRangeOfDate } from "./lib/utils";
 import CurrentTime from "./lib/time";
@@ -11,6 +12,8 @@ import MainMenuBar from "./ui/mainmenubar";
 import OptionsPanel from "./ui/optionspanel";
 import CalendarPanel from "./ui/calendar";
 import { DateRange } from 'react-day-picker';
+
+enableMapSet();
 
 export default function Home() {
   // Placeholder data for testing groups, will be loaded from cookies or web API in future
@@ -39,7 +42,8 @@ export default function Home() {
   ]);
 
   // Stores the information about calendar events set by the user
-  const [events, setEvents]: [events: CalEvent[], setEvents: Function] = useImmer([]);
+  const [events, setEvents]: [events: Map<string, CalEvent>, setEvents: Function]
+  = useImmer(new Map<string, CalEvent>());
 
   // Keeps track of what week is currently being focused on
   const [selectedWeek, setSelectedWeek] = useState<DateRange>(

@@ -4,7 +4,7 @@ import { createNumberSequence } from "./utils";
 export const TEST_EVENT_GROUPS = true;
 
 export const PRESET_PREFERENCES: Map<String, PreferencesType> = new Map([
-  ["NA", {
+  ["US", {
     tfHourTime: false,
     dateFormat: DateFormat.MDY,
     weekStartsOnMonday: false
@@ -41,9 +41,15 @@ export const DAYS_OF_WEEK: WeekDay[] = [
   { id: 6, name: "Saturday", shortName: "Sat", shorterName: "Sa"  },
 ];
 
-export const HOURS_IN_DAY = 24;
-export const HOURS_SEQUENCE = createNumberSequence(HOURS_IN_DAY);
+export const ROW_HEIGHT = 16;
+export const SPACING = 4;
+export const MINUTE_INTERVAL = 15;
 
-export const DEFAULT_EVENT_TITLE = "";
+export const SECONDS_IN_MINUTE = 60;
+export const MINUTES_IN_HOUR = 60;
+export const HOURS_IN_DAY = 24;
+export const HOURS_SEQUENCE = createNumberSequence(HOURS_IN_DAY, 0);
+
+export const PLACEHOLDER_EVENT_TITLE = "Untitled Event";
 export const DEFAULT_COLOR = "#558afc";
 export const DEFAULT_EVENT_DURATION = 15;

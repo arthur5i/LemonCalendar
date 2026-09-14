@@ -16,7 +16,7 @@ export class CalEvent {
   id: string;
   fromDate: Date;
   toDate: Date;
-  title: string = DEFAULT_EVENT_TITLE;
+  title: string = "";
   description: string = "";
   //location: Location;
   color: string = DEFAULT_COLOR;

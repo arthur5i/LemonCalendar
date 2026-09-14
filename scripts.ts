@@ -30,13 +30,38 @@ function generateUuid(amountIn: number | undefined) {
   console.log(uuidOut.toString());
 }
 
+function roundToNearestInt(numberIn: number, roundTo: number): number {
+  const basis: number = numberIn % roundTo;
+  const halfway: number = roundTo / 2;
+
+  if (basis < halfway) {
+    return numberIn - basis;
+  } else {
+    return numberIn + (roundTo - basis);
+  }
+}
+
+function testRoundToNearestInt(numberIn: string, roundTo: string) {
+  const realNumberIn = parseInt(numberIn);
+  const realRoundTo = parseInt(roundTo);
+
+  const numberOut = roundToNearestInt(realNumberIn, realRoundTo);
+  console.log(numberOut.toString());
+}
+
 program.command("init-eventgroups")
 .description("Initialize the test EventGroup objects.")
 .action(initEventGroups);
 
 program.command("uuid")
-.description("Generate UUIDs")
+.description("Generate UUIDs.")
 .argument("[amount]")
 .action(generateUuid);
+
+program.command("round")
+.description("Test roundToNearestInt function.")
+.argument("<numberIn>")
+.argument("<roundTo>")
+.action(testRoundToNearestInt);
 
 program.parse()

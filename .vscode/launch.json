@@ -11,7 +11,8 @@
       "name": "Next.js: debug client-side",
       "type": "chrome",
       "request": "launch",
-      "url": "http://localhost:3000"
+      "url": "http://localhost:3000",
+      "runtimeExecutable": "C:/Programs/chrome-win/chrome.exe"
     },
     {
       "name": "Next.js: debug client-side (Firefox)",
@@ -19,6 +20,7 @@
       "request": "launch",
       "url": "http://localhost:3000",
       "reAttach": true,
+      "firefoxExecutable": "C:/Program Files/LibreWolf/librewolf.exe",
       "pathMappings": [
         {
           "url": "webpack://_N_E",

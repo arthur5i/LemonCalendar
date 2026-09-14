@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useReducer } from "react";
-import { format, isSameDay } from "date-fns";
+import { useState, useReducer, useContext } from "react";
+import { isSameDay } from "date-fns";
 import { CalEvent } from "../lib/events";
-import { calcSpacing } from "../lib/utils";
+import { formatAsTime } from "../lib/utils";
+import { Preferences } from "../lib/context";
+import { ROW_HEIGHT, SPACING, PLACEHOLDER_EVENT_TITLE, MINUTES_IN_HOUR } from "../lib/const";
 
 /**
  * 
@@ -14,18 +16,21 @@ import { calcSpacing } from "../lib/utils";
  * @prop rowHeightValue {number} The value containing the height of the row on the calendar
  * @returns 
  */
-export default function EventBlock({thisEvent, events, setEvents, rowHeightValue}:
-  {thisEvent: CalEvent, events: CalEvent[], setEvents: Function, rowHeightValue: number}) {
+export default function EventBlock({thisEvent, events, setEvents}:
+  {thisEvent: CalEvent, events: Map<string, CalEvent>, setEvents: Function}) {
   /*
   TODO: Handle having multiple events happening at the same time
   */
+  const preferences = useContext(Preferences);
+
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(thisEvent.title);
 
-  const rowHeight = calcSpacing(rowHeightValue);
+  const rowHeight = ROW_HEIGHT * SPACING;
 
   function getYPos() {
-    return thisEvent.fromDate.getHours();
+    return thisEvent.fromDate.getHours() +
+    (thisEvent.fromDate.getMinutes() / MINUTES_IN_HOUR);
   }
 
   function onTitleClick(event: React.MouseEvent<HTMLElement>) {
@@ -42,8 +47,8 @@ export default function EventBlock({thisEvent, events, setEvents, rowHeightValue
     event.preventDefault();
     
     // Change event title
-    setEvents((draft: CalEvent[]) => {
-      const alterEvent = draft.find((val: CalEvent) => (val.id === thisEvent.id));
+    setEvents((draft: Map<string, CalEvent>) => {
+      const alterEvent = events.get(thisEvent.id);
       if (alterEvent !== undefined) {
         alterEvent.title = titleDraft;
       } else {
@@ -62,20 +67,22 @@ export default function EventBlock({thisEvent, events, setEvents, rowHeightValue
       onBlur={setEventTitle}
       autoFocus={true}></input> 
   } else {
-    eventName = <span onClick={onTitleClick}>
-      {(thisEvent.title === "") ? <i>Untitled Event</i> : thisEvent.title}
+    eventName = <span onClick={onTitleClick} className="cursor-text">
+      {(thisEvent.title === "") ? <i>{PLACEHOLDER_EVENT_TITLE}</i> : thisEvent.title}
     </span>
   }
 
   const cssStyle = {
     height: rowHeight,
-    top: `calc(var(--spacing) * ${rowHeightValue * getYPos()})`
+    top: `calc(var(--spacing) * ${ROW_HEIGHT * getYPos()})`
   }
-  const twStyle = "bg-blue-500 text-white p-1 w-full absolute";
+  const twStyle = "bg-blue-500 text-white p-1 w-full absolute border border-black cursor-grab";
+  const displayTime = formatAsTime(thisEvent.fromDate, preferences.tfHourTime);
 
   return <div
   style={cssStyle}
   className={twStyle}>
-    {eventName}
+    <div>{eventName}</div>
+    <div>{displayTime}</div>
   </div>
 }

@@ -16,6 +16,13 @@ type dispatchAction = {
   type: string
 }
 
+type DateColumnProps = {
+  dateIn: Date,
+  calEvents: CalEvent[],
+  dispatchCalEvents: Function,
+  setDelayedCalEventsDispatch: Function
+}
+
 /**
  * The main interactive calendar of the application.
  */
@@ -102,11 +109,8 @@ function TimeColumn() {
 }
 
 
-function DateColumn({dateIn, calEvents, dispatchCalEvents, setDelayedCalEventsDispatch}:
-  {dateIn: Date, calEvents: CalEvent[], dispatchCalEvents: Function, setDelayedCalEventsDispatch: Function}) {
-  const isCurrentDay = isSameDay(dateIn, CurrentTime.date);
-  const columnDate = dateIn.getDate();
-  const weekDay = DAYS_OF_WEEK[dateIn.getDay()];
+function DateColumn(props: DateColumnProps) {
+  const {dateIn, calEvents, dispatchCalEvents, setDelayedCalEventsDispatch} = props;
 
   const columnStyle = "bg-white w-full relative";
   const innerColumnStyle: Properties = {
@@ -114,34 +118,63 @@ function DateColumn({dateIn, calEvents, dispatchCalEvents, setDelayedCalEventsDi
     width: "100%",
     top: `calc(var(--spacing) * ${ROW_HEIGHT} + ${ROW_HEIGHT})`,
   };
-  
+
+  return (
+    <div className={columnStyle}>
+      <DateColumnHeader {...props} />
+      <DateColumnSpace {...props} innerColumnStyle={innerColumnStyle} />
+      <CalEventBlocks {...props} innerColumnStyle={innerColumnStyle} />
+    </div>
+  );
+}
+
+
+function DateColumnHeader(props: DateColumnProps) {
+  const {dateIn} = props;
+  const isCurrentDay = isSameDay(dateIn, CurrentTime.date);
+  const columnDate = dateIn.getDate();
+  const weekDay = DAYS_OF_WEEK[dateIn.getDay()];
+
+  return <CalBlock headerType={isCurrentDay}>
+    <div>
+      {weekDay.shortName}
+    </div>
+    <div>
+      {columnDate}
+    </div>
+  </CalBlock>
+}
+
+
+function DateColumnSpace(props: DateColumnProps & {innerColumnStyle: Properties}) {
+  const {dateIn, dispatchCalEvents, setDelayedCalEventsDispatch} = props;
 
   const hourBlocks = HOURS_SEQUENCE.map((hour, index) => {
     const dateOfHour = setHours(dateIn, hour);
     return <HourBlock key={index}/>
   });
 
-  // Get all calEvents for the day that this column represents
-  const thisDayEvents = calEvents.filter(event => {
-    return (isSameDay(dateIn, event.fromDate));
-  });
 
-  const eventBlocks = thisDayEvents.map((event, index) => {
-    return <EventBlock
-      thisEvent={event}
-      calEvents={calEvents}
-      dispatchCalEvents={dispatchCalEvents}
-      key={event.id}/>;
-  });
+  function createEvent(event: React.MouseEvent<HTMLElement>) {
+    const fromDate = new Date(dateIn);
 
+    const y = event.nativeEvent.layerY;
+    const minutes = getMinuteFromMouseY(y);
+    fromDate.setMinutes(minutes);
 
+    dispatchCalEvents({
+      type: "create",
+      fromDate: fromDate
+    });
+  }
 
   function handleDragOver(event: React.DragEvent) {
     event.preventDefault();
   }
 
   function handleDrop(event: React.DragEvent) {
-    //event.preventDefault();
+    event.preventDefault();
+
     const id = event.dataTransfer.getData("text/parameters");
 
     if (uuidValidate(id)) {
@@ -164,31 +197,36 @@ function DateColumn({dateIn, calEvents, dispatchCalEvents, setDelayedCalEventsDi
   }
 
 
+  return <div
+    style={props.innerColumnStyle}
+    onClick={createEvent}
+    onDragOver={handleDragOver}
+    onDrop={handleDrop}
+    >
+      {hourBlocks}
+  </div>
+}
 
-  return (
-    <div className={columnStyle}>
-      <CalBlock headerType={isCurrentDay}>
-        <div>
-          {weekDay.shortName}
-        </div>
-        <div>
-          {columnDate}
-        </div>
-      </CalBlock>
-      
-      <div
-      style={innerColumnStyle}
-      onClick={e => {createEvent(e, dateIn, dispatchCalEvents)}}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
-      >
-        {hourBlocks}
-      </div>
-      <div style={innerColumnStyle}>
-        {eventBlocks}
-      </div>
-    </div>
-  );
+
+function CalEventBlocks(props: DateColumnProps & {innerColumnStyle: Properties}) {
+  const {dateIn, calEvents, dispatchCalEvents} = props;
+
+  // Get all calEvents for the day that this column represents
+  const thisDayEvents = calEvents.filter(event => {
+    return (isSameDay(dateIn, event.fromDate));
+  });
+
+  const eventBlocks = thisDayEvents.map((event, index) => {
+    return <EventBlock
+      thisEvent={event}
+      calEvents={calEvents}
+      dispatchCalEvents={dispatchCalEvents}
+      key={event.id}/>;
+  });
+
+  return <div style={props.innerColumnStyle}>
+    {eventBlocks}
+  </div>
 }
 
 
@@ -203,7 +241,6 @@ function TimeBlock({hour}: {hour: number}) {
 
 function HourBlock() {
   return <CalBlock></CalBlock>
-  //return <CalBlock onClick={e => {createEvent(e, date, dispatchCalEvents)}}></CalBlock>
 }
 
 
@@ -212,18 +249,4 @@ function getMinuteFromMouseY(mouseY: number): number {
   const minuteRatio = MINUTES_IN_HOUR / height;
   const minutes = minuteRatio * mouseY;
   return floorToInt(minutes, MINUTE_INTERVAL);
-}
-
-
-function createEvent(event: React.MouseEvent<HTMLElement>, date: Date, dispatchCalEvents: Function) {
-  const fromDate = new Date(date);
-
-  const y = event.nativeEvent.layerY;
-  const minutes = getMinuteFromMouseY(y);
-  fromDate.setMinutes(minutes);
-
-  dispatchCalEvents({
-    type: "create",
-    fromDate: fromDate
-  });
 }

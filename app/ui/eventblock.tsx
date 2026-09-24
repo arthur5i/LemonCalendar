@@ -14,6 +14,13 @@ enum Editing {
   Size
 }
 
+type Props = {
+  thisEvent: CalEvent;
+  calEvents: CalEvent[];
+  dispatchCalEvents: Function;
+}
+
+
 /**
  * 
  * @prop thisEvent {CalEvent} The calendar event that this event block concerns. Technically redundant,
@@ -23,45 +30,67 @@ enum Editing {
  * @prop rowHeightValue {number} The value containing the height of the row on the calendar
  * @returns 
  */
-export default function EventBlock({thisEvent, calEvents, dispatchCalEvents}:
-  {thisEvent: CalEvent, calEvents: CalEvent[], dispatchCalEvents: Function}) {
+export default function EventBlock(props: Props) {
+  const {thisEvent} = props;
   /*
   TODO: Handle having multiple calEvents happening at the same time
   */
-  const preferences = useContext(Preferences);
+  
 
   const [editing, setEditing] = useState(Editing.None);
-  const [titleDraft, setTitleDraft] = useState(thisEvent.title);
 
   const rowHeight = ROW_HEIGHT * SPACING;
   const cssStyle = {
     height: rowHeight,
-    top: `calc(var(--spacing) * ${ROW_HEIGHT * getYPos()})`,
-    //display: (editing === Editing.Position ? "none" : "block")
+    top: `calc(var(--spacing) * ${ROW_HEIGHT * getYPos()})`
   }
   const twStyle = "bg-blue-500 text-white p-1 w-full absolute border border-black cursor-grab";
-  const displayTime = formatAsTime(thisEvent.fromDate, preferences.tfHourTime);
   
-  let eventName;
-  if (editing === Editing.Title) {
-    eventName = <input
-      value={titleDraft}
-      onChange={onInputChange}
-      onBlur={setEventTitle}
-      autoFocus={true}></input> 
-  } else {
-    eventName = <span onClick={onTitleClick} className="cursor-text">
-      {(thisEvent.title === "") ? <i>{PLACEHOLDER_EVENT_TITLE}</i> : thisEvent.title}
-    </span>
-  }
-
-
   
+
   function getYPos() {
     return thisEvent.fromDate.getHours() +
     (thisEvent.fromDate.getMinutes() / MINUTES_IN_HOUR);
   }
 
+
+  function handleDragStart(event: React.DragEvent) {
+    if (editing === Editing.None) {
+      setEditing(Editing.Position);
+      event.dataTransfer.setData("text/parameters", thisEvent.id);
+      //event.dataTransfer.setDragImage(document.createElement("div"), 0, 0);
+    } else {
+      event.stopPropagation();
+    }
+  }
+
+  function handleDragMove(event: React.DragEvent) {
+    
+  }
+
+  function handleDragEnd(event: React.DragEvent) {
+    setEditing(Editing.None);
+  }
+
+
+  return <div
+    style={cssStyle}
+    className={twStyle}
+    draggable={true}
+    onDragStart={handleDragStart}
+    onDrag={handleDragMove}
+    onDragEnd={handleDragEnd}
+  >
+    <EventName {...props} editing={editing} setEditing={setEditing} />
+    <DisplayTime props={props} />
+  </div>
+}
+
+
+function EventName(props: Props & {editing: Editing, setEditing: Function}) {
+  const {thisEvent, dispatchCalEvents, editing, setEditing} = props;
+
+  const [titleDraft, setTitleDraft] = useState(thisEvent.title);
 
   function onTitleClick(event: React.MouseEvent<HTMLElement>) {
     setEditing(Editing.Title);
@@ -73,7 +102,6 @@ export default function EventBlock({thisEvent, calEvents, dispatchCalEvents}:
     const target = event.target as HTMLInputElement;
     setTitleDraft(target.value);
   }
-
 
   function setEventTitle(event: React.FocusEvent) {
     event.preventDefault();
@@ -88,38 +116,26 @@ export default function EventBlock({thisEvent, calEvents, dispatchCalEvents}:
     setEditing(Editing.None);
   }
 
-
-  function handleDragStart(event: React.DragEvent) {
-    if (editing === Editing.None) {
-      setEditing(Editing.Position);
-      event.dataTransfer.setData("text/parameters", thisEvent.id);
-      //event.dataTransfer.setDragImage(document.createElement("div"), 0, 0);
-    } else {
-      event.stopPropagation();
-    }
+  let eventName;
+  if (editing === Editing.Title) {
+    eventName = <input
+      value={titleDraft}
+      onChange={onInputChange}
+      onBlur={setEventTitle}
+      autoFocus={true}></input> 
+  } else {
+    eventName = <span onClick={onTitleClick} className="cursor-text">
+      {(thisEvent.title === "") ? <i>{PLACEHOLDER_EVENT_TITLE}</i> : thisEvent.title}
+    </span>
   }
-
-
-  function handleDragMove(event: React.DragEvent) {
-    
-  }
-
-
-  function handleDragEnd(event: React.DragEvent) {
-    setEditing(Editing.None);
-  }
-
   
+  return <div>{eventName}</div>
+}
 
-  return <div
-  style={cssStyle}
-  className={twStyle}
-  draggable={true}
-  onDragStart={handleDragStart}
-  onDrag={handleDragMove}
-  onDragEnd={handleDragEnd}
-  >
-    <div>{eventName}</div>
-    <div>{displayTime}</div>
-  </div>
+
+function DisplayTime({props}: {props: Props}) {
+  const preferences = useContext(Preferences);
+  const {thisEvent} = props;
+  const displayTime = formatAsTime(thisEvent.fromDate, preferences.tfHourTime);
+  return <div>{displayTime}</div>;
 }

@@ -37,7 +37,7 @@ export function getSimpleTime(hour: number, iso: boolean): string {
 }
 
 export function formatAsTime(dateIn: Date, tfHourTime: boolean): string {
-  const timeFormat = tfHourTime ? "HH:mm" : "hh:mm a";
+  const timeFormat = tfHourTime ? "HH:mm" : "p";
   return format(dateIn, timeFormat);
 }
 
@@ -45,7 +45,7 @@ export function calcSpacing(numberIn: number): string {
   return `calc(var(--spacing) * ${numberIn})`;
 }
 
-export function roundToNearestInt(numberIn: number, roundTo: number): number {
+export function roundToInt(numberIn: number, roundTo: number): number {
   const basis: number = numberIn % roundTo;
   const halfway: number = roundTo / 2;
 
@@ -54,4 +54,8 @@ export function roundToNearestInt(numberIn: number, roundTo: number): number {
   } else {
     return numberIn + (roundTo - basis);
   }
+}
+
+export function floorToInt(numberIn: number, roundTo: number): number {
+  return numberIn - (numberIn % roundTo);
 }

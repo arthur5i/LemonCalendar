@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactElement, useState } from "react";
-import { EventGroup } from "../lib/events";
+import { EventGroup } from "../lib/calevents";
 import { Panel } from "./components";
 import { Field } from "@/components/ui/field";
 import { Label } from "@/components/ui/label";

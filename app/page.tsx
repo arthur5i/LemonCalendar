@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useContext } from "react";
-import { enableMapSet } from "immer";
-import { useImmer } from "use-immer";
+import { useState, useEffect } from "react";
+import { flushSync } from "react-dom";
+//import { enableMapSet } from "immer";
+import { useImmer, useImmerReducer } from "use-immer";
 import { getWeekRangeOfDate } from "./lib/utils";
 import CurrentTime from "./lib/time";
-import { EventGroup, CalEvent} from "./lib/events";
+import { CalEventGroup, CalEvent} from "./lib/calevents";
 import { Preferences } from "./lib/context";
 import { PRESET_PREFERENCES } from "./lib/const";
 import MainMenuBar from "./ui/mainmenubar";
@@ -13,11 +14,11 @@ import OptionsPanel from "./ui/optionspanel";
 import CalendarPanel from "./ui/calendar";
 import { DateRange } from 'react-day-picker';
 
-enableMapSet();
+//enableMapSet();
 
 export default function Home() {
   // Placeholder data for testing groups, will be loaded from cookies or web API in future
-  const [eventGroups, setEventGroups]: [eventGroups: EventGroup[], setEventGroups: Function] = useImmer([
+  const [calEventGroups, setCalEventGroups] = useImmer([
     {
       "id": "5acf4f2d-9b2e-4abc-93eb-2ba2bf1e6bb2",
       "name": "Group 1",
@@ -42,8 +43,7 @@ export default function Home() {
   ]);
 
   // Stores the information about calendar events set by the user
-  const [events, setEvents]: [events: Map<string, CalEvent>, setEvents: Function]
-  = useImmer(new Map<string, CalEvent>());
+  const [calEvents, dispatchCalEvents] = useImmerReducer(calEventsReducer, new Array<CalEvent>());
 
   // Keeps track of what week is currently being focused on
   const [selectedWeek, setSelectedWeek] = useState<DateRange>(
@@ -58,15 +58,50 @@ export default function Home() {
       <MainMenuBar />
         <div className="flex h-screen overflow-y-hidden">
             <OptionsPanel
-            eventGroups={eventGroups} setEventGroups={setEventGroups}
+            eventGroups={calEventGroups} setEventGroups={setCalEventGroups}
             selectedWeek={selectedWeek} setSelectedWeek={setSelectedWeek}
             />
             <CalendarPanel
             selectedWeek={selectedWeek}
-            events={events} setEvents={setEvents}
+            calEvents={calEvents} dispatchCalEvents={dispatchCalEvents}
             />
         </div>
       </Preferences>
     </div>
   );
+}
+
+function calEventsReducer(draft: CalEvent[], action: any): any {
+  switch (action.type) {
+
+    case "create":
+      const newEvent = new CalEvent(action.fromDate);
+      draft.push(newEvent);
+      break;
+
+    case "setTitle":
+      try {
+        var index = draft.findIndex(value => value.id === action.id);
+        draft[index].title = action.titleDraft;
+      } catch {
+        throw Error("Undefined event upon changing title");
+      }
+      break;
+
+    case "setDate":
+      try {
+        var index = draft.findIndex(value => value.id === action.id);
+        draft[index].fromDate = action.newDate;
+      } catch {
+        throw Error("Undefined event upon changing date");
+      }
+      break;
+    
+    case "none":
+      break;
+
+    default: {
+      throw Error('Unknown action: ' + action.type);
+    }
+  }
 }

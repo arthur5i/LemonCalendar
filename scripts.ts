@@ -49,6 +49,24 @@ function testRoundToNearestInt(numberIn: string, roundTo: string) {
   console.log(numberOut.toString());
 }
 
+function testJSONConversion() {
+  const jsonIn = {
+    fromDate: new Date(Date.now()),
+    temperature: 20
+  }
+
+  console.log(jsonIn.fromDate.toString());
+  const jsonString = JSON.stringify(jsonIn);
+  console.log(jsonString);
+
+  const jsonOut = JSON.parse(jsonString);
+  jsonOut.fromDate = new Date(jsonOut.fromDate);
+  console.log(jsonOut.fromDate.toString());
+
+  const jsonOutString = JSON.stringify(jsonOut);
+  console.log(jsonOutString);
+}
+
 program.command("init-eventgroups")
 .description("Initialize the test EventGroup objects.")
 .action(initEventGroups);
@@ -64,4 +82,8 @@ program.command("round")
 .argument("<roundTo>")
 .action(testRoundToNearestInt);
 
-program.parse()
+program.command("json")
+.description("Test JSON string conversion.")
+.action(testJSONConversion);
+
+program.parse();

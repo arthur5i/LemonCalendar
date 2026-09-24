@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { EventGroup, CalEvent} from "./lib/events";
+import { CalEventGroup, CalEvent} from "./lib/calevents";
 import "./globals.css";
 
 const geistSans = Geist({

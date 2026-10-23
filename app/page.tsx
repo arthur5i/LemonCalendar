@@ -75,8 +75,7 @@ function calEventsReducer(draft: CalEvent[], action: any): any {
   switch (action.type) {
 
     case "create":
-      const newEvent = new CalEvent(action.fromDate);
-      draft.push(newEvent);
+      draft.push(action.calEvent);
       break;
 
     case "setTitle":

@@ -1,7 +1,8 @@
 import { Month, WeekDay, DateFormat, PreferencesType } from "./types";
 import { createNumberSequence } from "./utils";
 
-export const TEST_EVENT_GROUPS = true;
+export const TEST_CAL_EVENT_GROUPS = false;
+export const TEST_EDITING_STATE = false;
 
 export const PRESET_PREFERENCES: Map<String, PreferencesType> = new Map([
   ["US", {

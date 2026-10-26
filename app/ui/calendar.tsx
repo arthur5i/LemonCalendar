@@ -17,7 +17,7 @@ import CurrentTime from "../lib/time";
 import { CalEvent } from "../lib/calevents";
 import { getSimpleTime, roundToInt, floorToInt } from "../lib/utils";
 import { EditingMode, CalEditingState, Coord } from "../lib/types";
-import { format, addDays, isSameDay, setHours, set } from "date-fns";
+import { addDays, getDay, isSameDay, setHours } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Properties } from "csstype";
 import { Preferences } from "../lib/context";
@@ -28,14 +28,6 @@ type dispatchAction = {
   type: string
 }
 
-type DateColumnProps = {
-  dateIn: Date,
-  calEvents: CalEvent[],
-  dispatchCalEvents: Function,
-  setDelayedCalEventsDispatch: Function,
-  calEditingState: CalEditingState,
-  dispatchCalEditingState: Function
-}
 
 
 /**
@@ -58,22 +50,7 @@ export default function CalendarPanel({ selectedWeek, calEvents, dispatchCalEven
   const [delayedCalEventsDispatch, setDelayedCalEventsDispatch] 
     = useState<dispatchAction>({type: "none"});
 
-  let dateOfWeek = selectedWeek.from!;
-
-  const dateColumns = DAYS_OF_WEEK.map((weekDay) => {
-    const dateColumn = <DateColumn
-    dateIn={dateOfWeek}
-    calEvents={calEvents}
-    dispatchCalEvents={dispatchCalEvents}
-    setDelayedCalEventsDispatch={setDelayedCalEventsDispatch}
-    calEditingState={calEditingState}
-    dispatchCalEditingState={dispatchCalEditingState}
-    key={weekDay.id} />;
-
-    dateOfWeek = addDays(dateOfWeek, 1);
-    
-    return dateColumn;
-  });
+  
 
 
   useEffect(() => {
@@ -109,10 +86,18 @@ export default function CalendarPanel({ selectedWeek, calEvents, dispatchCalEven
         {calEditingState.toStringArray().map((value, index) => <div key={index}>{value}</div>)}
       </div>}
       <TimeColumn />
-      {dateColumns}
+      <DateColumns
+        selectedWeek={selectedWeek}
+        calEvents={calEvents}
+        dispatchCalEvents={dispatchCalEvents}
+        setDelayedCalEventsDispatch={setDelayedCalEventsDispatch}
+        calEditingState={calEditingState}
+        dispatchCalEditingState={dispatchCalEditingState}
+      />
     </div>
   );
 }
+
 
 
 function calEditingStateReducer(draft: CalEditingState, action: any): any {
@@ -152,6 +137,12 @@ function calEditingStateReducer(draft: CalEditingState, action: any): any {
       draft.removeHoverValue(action.FromDate);
       draft.removeHoverValue(action.ToDate);
       break;
+    case "startPositionDrag":
+      draft.setActiveEditingMode(EditingMode.Position, action.id);
+      break;
+    case "endPositionDrag":
+      draft.clearActiveEditingState();
+      break;
     case "clearActiveEditingState":
       draft.clearActiveEditingState();
       break;
@@ -159,6 +150,7 @@ function calEditingStateReducer(draft: CalEditingState, action: any): any {
       console.log("Invalid action type in calEditingStateReducer");
   }
 }
+
 
 
 function CalBlock({headerType, onClick, children}:
@@ -181,6 +173,7 @@ function CalBlock({headerType, onClick, children}:
 }
 
 
+
 /**
  * Displays each hour of the day on the left of the UI
  */
@@ -196,8 +189,129 @@ function TimeColumn() {
 }
 
 
+
+interface DateColumnsProps {
+  selectedWeek?: DateRange
+  calEvents: CalEvent[],
+  dispatchCalEvents: Function,
+  setDelayedCalEventsDispatch: Function,
+  calEditingState: CalEditingState,
+  dispatchCalEditingState: Function
+}
+
+function DateColumns(props: DateColumnsProps) {
+  const {
+    selectedWeek,
+    calEvents,
+    dispatchCalEvents,
+    setDelayedCalEventsDispatch,
+    calEditingState,
+    dispatchCalEditingState
+  } = props;
+
+  // Stores which day of the week on the calendar the mouse is hovering over
+  const [weekDayHovering, setWeekDayHovering] = useState(new Date());
+
+  const twStyle="flex w-full"
+
+  // Set dateOfWeek to the date for the first day of the week
+  let dateOfWeek = selectedWeek!.from!;
+
+  // Generate the array of DateColumn components
+  const dateColumns = DAYS_OF_WEEK.map((weekDay) => {
+    const dateColumn = <DateColumn
+    dateIn={dateOfWeek}
+    calEvents={calEvents}
+    dispatchCalEvents={dispatchCalEvents}
+    setDelayedCalEventsDispatch={setDelayedCalEventsDispatch}
+    calEditingState={calEditingState}
+    dispatchCalEditingState={dispatchCalEditingState}
+    setWeekDayHovering={setWeekDayHovering}
+    key={weekDay.id} />;
+
+    dateOfWeek = addDays(dateOfWeek, 1);
+    
+    return dateColumn;
+  });
+  
+  // Handles the beginning of mouse events for all elements within the calendar
+  function handlePointerDown(event: React.PointerEvent) {
+    switch (calEditingState.getHoverEditingMode()) {
+      case EditingMode.Position:
+        dispatchCalEditingState({
+          type: "startPositionDrag",
+          id: calEditingState.getHoverId()
+        });
+        break;
+    }
+  }
+
+  // Handles the ending of mouse events for all elements within the calendar
+  function handlePointerUp(event: React.PointerEvent) {
+    switch (calEditingState.getActiveEditingMode()) {
+      case EditingMode.Position:
+        handleDrop(event, calEditingState.getActiveEditingId());
+        break;
+    }
+  }
+
+  // Handles any mouse event that involves movement across calendar
+  function handlePointerMove(event: React.PointerEvent) {
+
+  }
+
+  // Handles the end of the dragging of calendar events, repositions them in the calendar
+  function handleDrop(event: React.PointerEvent, id: string) {
+    if (uuidValidate(id)) {
+      const y = event.nativeEvent.layerY;
+      const minutes = getMinuteFromMouseY(y);
+
+      const newDate = new Date(weekDayHovering);
+      newDate.setMinutes(minutes);
+
+      /* For some reason, calling dispatch inside a drag event handler doesn't cause the 
+      screen to update, so this workaround is necessary.*/
+      setDelayedCalEventsDispatch(
+        {
+          type: "setDate",
+          id: id,
+          newDate: newDate
+        }
+      );
+    }
+  }
+
+  function handleDragOver(event: React.DragEvent) {
+    event.preventDefault();
+  }
+
+
+
+  return <div
+    className={twStyle}
+    onPointerDown={handlePointerDown}
+    onPointerUp={handlePointerUp}
+    onPointerMove={handlePointerMove}>
+    {dateColumns}
+  </div>
+}
+
+
+
+interface DateColumnProps extends DateColumnsProps {
+  dateIn: Date,
+  setWeekDayHovering: Function
+}
+
 function DateColumn(props: DateColumnProps) {
-  const {dateIn, calEvents, dispatchCalEvents, setDelayedCalEventsDispatch, dispatchCalEditingState} = props;
+  const {
+    dateIn,
+    calEvents,
+    dispatchCalEvents,
+    setDelayedCalEventsDispatch,
+    dispatchCalEditingState,
+    setWeekDayHovering
+  } = props;
 
   const columnStyle = "bg-white w-full relative";
   const innerColumnStyle: Properties = {
@@ -206,14 +320,23 @@ function DateColumn(props: DateColumnProps) {
     top: `calc(var(--spacing) * ${ROW_HEIGHT} + ${ROW_HEIGHT})`,
   };
 
+  function handlePointerEnter(event: React.PointerEvent) {
+    setWeekDayHovering(dateIn);
+  }
+
+
+
   return (
-    <div className={columnStyle}>
+    <div
+    className={columnStyle}
+    onPointerEnter={handlePointerEnter}>
       <DateColumnHeader {...props} />
       <DateColumnSpace {...props} innerColumnStyle={innerColumnStyle} />
       <CalEventBlocks {...props} innerColumnStyle={innerColumnStyle} />
     </div>
   );
 }
+
 
 
 function DateColumnHeader(props: DateColumnProps) {
@@ -233,73 +356,50 @@ function DateColumnHeader(props: DateColumnProps) {
 }
 
 
+
 function DateColumnSpace(props: DateColumnProps & {innerColumnStyle: Properties}) {
-  const {dateIn, dispatchCalEvents, setDelayedCalEventsDispatch, dispatchCalEditingState} = props;
+  const {dateIn, dispatchCalEvents, setDelayedCalEventsDispatch, calEditingState, dispatchCalEditingState} = props;
 
   const hourBlocks = HOURS_SEQUENCE.map((hour, index) => {
     const dateOfHour = setHours(dateIn, hour);
     return <HourBlock key={index}/>
   });
 
-
   function createEvent(event: React.MouseEvent<HTMLElement>) {
-    const fromDate = new Date(dateIn);
+    if (
+      calEditingState.getHoverEditingMode() === EditingMode.NewEvent ||
+      calEditingState.getHoverEditingMode() === EditingMode.None
+    ) {
+      const fromDate = new Date(dateIn);
 
-    const y = event.nativeEvent.layerY;
-    const minutes = getMinuteFromMouseY(y);
-    fromDate.setMinutes(minutes);
-    const newEvent = new CalEvent(fromDate);
-
-    dispatchCalEvents({
-      type: "create",
-      calEvent: newEvent,
-      dispatchCalEditingState: dispatchCalEditingState
-    });
-
-    dispatchCalEditingState({
-      type: "eventBlockEnter",
-      calEventId: newEvent.id
-    });
-  }
-
-  function handleDragOver(event: React.DragEvent) {
-    event.preventDefault();
-  }
-
-  function handleDrop(event: React.DragEvent) {
-    event.preventDefault();
-
-    const id = event.dataTransfer.getData("text/parameters");
-
-    if (uuidValidate(id)) {
       const y = event.nativeEvent.layerY;
       const minutes = getMinuteFromMouseY(y);
+      fromDate.setMinutes(minutes);
+      const newEvent = new CalEvent(fromDate);
 
-      const newDate = new Date(dateIn);
-      newDate.setMinutes(minutes);
+      dispatchCalEvents({
+        type: "create",
+        calEvent: newEvent,
+        dispatchCalEditingState: dispatchCalEditingState
+      });
 
-      /* For some reason, calling dispatch inside a drag event handler doesn't cause the 
-      screen to update, so this workaround is necessary. */
-      setDelayedCalEventsDispatch(
-        {
-          type: "setDate",
-          id: id,
-          newDate: newDate
-        }
-      );
+      dispatchCalEditingState({
+        type: "eventBlockEnter",
+        calEventId: newEvent.id
+      });
     }
   }
+
 
 
   return <div
     style={props.innerColumnStyle}
     onClick={createEvent}
-    onDragOver={handleDragOver}
-    onDrop={handleDrop}
     >
       {hourBlocks}
   </div>
 }
+
 
 
 function CalEventBlocks(props: DateColumnProps & {innerColumnStyle: Properties}) {
@@ -332,6 +432,7 @@ function CalEventBlocks(props: DateColumnProps & {innerColumnStyle: Properties})
 }
 
 
+
 function TimeBlock({hour}: {hour: number}) {
   //const pref = useContext(Preferences);
 
@@ -341,9 +442,11 @@ function TimeBlock({hour}: {hour: number}) {
 }
 
 
+
 function HourBlock() {
   return <CalBlock></CalBlock>
 }
+
 
 
 function getMinuteFromMouseY(mouseY: number): number {

@@ -2,6 +2,7 @@
 
 import { useState, useReducer, useContext } from "react";
 import { isSameDay } from "date-fns";
+import { SHOW_RESIZE_HANDLES } from "../lib/const";
 import { CalEvent } from "../lib/calevents";
 import { formatAsTime } from "../lib/utils";
 import { Preferences } from "../lib/context";
@@ -41,11 +42,11 @@ export default function EventBlock(props: Props) {
     height: rowHeight,
     top: `calc(var(--spacing) * ${ROW_HEIGHT * getYPos()})`
   }
-  const twStyle = "bg-blue-500 text-white p-1 w-full absolute border border-black cursor-grab";
-  const draggable = calEditingState.getHoverEditingMode() === EditingMode.None || (
+  const twStyle = "bg-blue-500 text-white p-1 w-full absolute border border-black cursor-grab select-none";
+  /*const draggable = calEditingState.getHoverEditingMode() === EditingMode.None || (
     calEditingState.getActiveEditingId() === thisEvent.id &&
     calEditingState.getActiveEditingMode() === EditingMode.Position
-  );
+  );*/
   
 
   function getYPos() {
@@ -96,14 +97,14 @@ function EventName(props: Props & {calEditingState: CalEditingState, dispatchCal
     setTitleDraft(thisEvent.title);
   }
 
-  function onPointerEnter() {
+  function handlePointerEnter() {
     dispatchCalEditingState({
       type: "eventNameEnter",
       calEventId: thisEvent.id
     });
   }
 
-  function onPointerLeave() {
+  function handlePointerLeave() {
     dispatchCalEditingState({
       type: "eventNameLeave"
     });
@@ -139,8 +140,8 @@ function EventName(props: Props & {calEditingState: CalEditingState, dispatchCal
   } else {
     eventName = <span
     onClick={onTitleClick}
-    onPointerEnter={onPointerEnter}
-    onPointerLeave={onPointerLeave}
+    onPointerEnter={handlePointerEnter}
+    onPointerLeave={handlePointerLeave}
     className="cursor-text">
       {(thisEvent.title === "") ? <i>{PLACEHOLDER_EVENT_TITLE}</i> : thisEvent.title}
     </span>
@@ -161,12 +162,10 @@ function DisplayTime(props: Props) {
 function ResizeHandle(props: Props & {topHandle: boolean, calEditingState: CalEditingState, dispatchCalEditingState: Function}) {
   const {thisEvent, topHandle, calEditingState, dispatchCalEditingState} = props;
   
-  const visibleHandles = true;
   const pointerDeviation = 0;
 
-  
   const twStyle = `absolute h-2 w-full bg-red-600 cursor-n-resize
-  ${visibleHandles ? "" : "opacity-0"}`
+  ${SHOW_RESIZE_HANDLES ? "" : "opacity-0"}`
 
   const cssStyle = {
     left: 0,

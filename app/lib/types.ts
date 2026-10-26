@@ -69,7 +69,7 @@ export enum EditingMode {
 export class CalEditingState {
   [immerable] = true;
 
-  hoverStack: EditingMode[] = [];
+  hoverStack: EditingMode[] = [EditingMode.None];
   hoverId = "";
 
   activeEditingMode: EditingMode = EditingMode.None;
@@ -129,6 +129,15 @@ export class CalEditingState {
 
   getActiveEditingId(): string {
     return this.activeEditingId;
+  }
+
+  setActiveEditingMode(editingMode: EditingMode, id?: string) {
+    this.activeEditingMode = editingMode;
+    if (id !== undefined) {
+      this.activeEditingId = id;
+    } else {
+      this.activeEditingId = "";
+    }
   }
 
   clearActiveEditingState() {
